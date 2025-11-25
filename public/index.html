@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Sampling Database</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #e0e0e0;
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            background: white;
+        }
+
+        .tab-button:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .result-box {
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .result-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+
+        .sample-list {
+            list-style: none;
+        }
+
+        .sample-item {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .sample-item strong {
+            color: #667eea;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌿 Plant Sampling Database</h1>
+            <p>Manage and query plant samples with ease</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab(event, 'view')">View All</button>
+            <button class="tab-button" onclick="switchTab(event, 'add')">Add Sample</button>
+            <button class="tab-button" onclick="switchTab(event, 'query')">Query Sample</button>
+            <button class="tab-button" onclick="switchTab(event, 'update')">Update Sample</button>
+            <button class="tab-button" onclick="switchTab(event, 'delete')">Delete Sample</button>
+        </div>
+
+        <!-- Tab 1: View All Samples -->
+        <div id="view" class="tab-content active">
+            <h2>All Plant Samples</h2>
+            <button onclick="viewAllSamples()">Load All Samples</button>
+            <div id="viewResult"></div>
+        </div>
+
+        <!-- Tab 2: Add Sample -->
+        <div id="add" class="tab-content">
+            <h2>Add New Plant Sample</h2>
+            <form id="addForm">
+                <div class="form-group">
+                    <label>Date of Sampling (YYYY-MM-DD):</label>
+                    <input type="date" id="addDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Scientific Name:</label>
+                    <input type="text" id="addScientific" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Common Name:</label>
+                    <input type="text" id="addCommon" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Description:</label>
+                    <textarea id="addDescription"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Latitude:</label>
+                    <input type="number" id="addLatitude" step="0.00001" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Longitude:</label>
+                    <input type="number" id="addLongitude" step="0.00001" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Location Description:</label>
+                    <input type="text" id="addLocationDesc" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Region:</label>
+                    <input type="text" id="addRegion" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Country:</label>
+                    <input type="text" id="addCountry" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Soil pH:</label>
+                    <input type="number" id="addSoilPH" step="0.1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Soil Nutrients:</label>
+                    <input type="text" id="addNutrients" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Soil Type:</label>
+                    <input type="text" id="addSoilType" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Temperature (°C):</label>
+                    <input type="number" id="addTemp" step="0.1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Humidity (%):</label>
+                    <input type="number" id="addHumidity" step="0.1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Altitude (meters):</label>
+                    <input type="number" id="addAltitude" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Location ID:</label>
+                    <input type="number" id="addLocationId" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Researcher ID:</label>
+                    <input type="number" id="addResearcherId" required>
+                </div>
+
+                <button type="button" onclick="addSample()">Add Sample</button>
+            </form>
+            <div id="addResult"></div>
+        </div>
+
+        <!-- Tab 3: Query Sample -->
+        <div id="query" class="tab-content">
+            <h2>Query Plant Sample by ID</h2>
+            <div class="form-group">
+                <label>Sample ID:</label>
+                <input type="number" id="queryId" placeholder="Enter sample ID">
+            </div>
+            <button onclick="querySample()">Query Sample</button>
+            <div id="queryResult"></div>
+        </div>
+
+        <!-- Tab 4: Update Sample -->
+        <div id="update" class="tab-content">
+            <h2>Update Plant Sample</h2>
+            <div class="form-group">
+                <label>Sample ID:</label>
+                <input type="number" id="updateId" placeholder="Enter sample ID to update">
+            </div>
+
+            <div class="form-group">
+                <label>Scientific Name (leave blank to keep current):</label>
+                <input type="text" id="updateScientific">
+            </div>
+
+            <div class="form-group">
+                <label>Temperature (°C):</label>
+                <input type="number" id="updateTemp" step="0.1">
+            </div>
+
+            <div class="form-group">
+                <label>Humidity (%):</label>
+                <input type="number" id="updateHumidity" step="0.1">
+            </div>
+
+            <button type="button" onclick="updateSample()">Update Sample</button>
+            <div id="updateResult"></div>
+        </div>
+
+        <!-- Tab 5: Delete Sample -->
+        <div id="delete" class="tab-content">
+            <h2>Delete Plant Sample</h2>
+            <div class="form-group">
+                <label>Sample ID:</label>
+                <input type="number" id="deleteId" placeholder="Enter sample ID to delete">
+            </div>
+            <button type="button" onclick="deleteSample()" style="background: #dc3545;">Delete Sample</button>
+            <div id="deleteResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        function switchTab(event, tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const buttons = document.querySelectorAll('.tab-button');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function formatJson(obj) {
+            return JSON.stringify(obj, null, 2);
+        }
+
+        async function viewAllSamples() {
+            try {
+                const response = await fetch(`${API_BASE}/samples`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    let html = '<div class="result-box success"><h3>All Samples</h3>';
+                    if (result.data.length === 0) {
+                        html += '<p>No samples found</p>';
+                    } else {
+                        html += '<ul class="sample-list">';
+                        result.data.forEach(sample => {
+                            html += `
+                                <li class="sample-item">
+                                    <strong>Sample ID: ${sample.sample_id}</strong><br>
+                                    Date: ${sample.date_of_sampling}<br>
+                                    <strong>Details:</strong> ${JSON.stringify(sample.plant_sample_detail)}<br>
+                                </li>
+                            `;
+                        });
+                        html += '</ul>';
+                    }
+                    html += '<pre>' + formatJson(result) + '</pre></div>';
+                    document.getElementById('viewResult').innerHTML = html;
+                } else {
+                    document.getElementById('viewResult').innerHTML = `<div class="result-box error"><h3>Error</h3><p>${result.error}</p></div>`;
+                }
+            } catch (error) {
+                document.getElementById('viewResult').innerHTML = `<div class="result-box error"><h3>Error</h3><p>${error.message}</p></div>`;
+            }
+        }
+
+        async function addSample() {
+            try {
+                const sampleData = {
+                    date_of_sampling: document.getElementById('addDate').value,
+                    plant_sample_detail: {
+                        scientific_name: document.getElementById('addScientific').value,
+                        common_name: document.getElementById('addCommon').value,
+                        description: document.getElementById('addDescription').value
+                    },
+                    sampling_location: {
+                        latitude: parseFloat(document.getElementById('addLatitude').value),
+                        longitude: parseFloat(document.getElementById('addLongitude').value),
+                        location_description: document.getElementById('addLocationDesc').value,
+                        region: document.getElementById('addRegion').value,
+                        country: document.getElementById('addCountry').value
+                    },
+                    environmental_conditions: {
+                        soil_composition: {
+                            pH: parseFloat(document.getElementById('addSoilPH').value),
+                            nutrients: document.getElementById('addNutrients').value,
+                            type: document.getElementById('addSoilType').value
+                        },
+                        temperature: parseFloat(document.getElementById('addTemp').value),
+                        humidity: parseFloat(document.getElementById('addHumidity').value),
+                        altitude: parseInt(document.getElementById('addAltitude').value)
+                    },
+                    location_id: parseInt(document.getElementById('addLocationId').value),
+                    researcher_id: parseInt(document.getElementById('addResearcherId').value)
+                };
+
+                const response = await fetch(`${API_BASE}/samples/add`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sampleData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('addForm').reset();
+                    document.getElementById('addResult').innerHTML = `
+                        <div class="result-box success">
+                            <h3>Success!</h3>
+                            <p>${result.message}</p>
+                            <p>New Sample ID: <strong>${result.sample_id}</strong></p>
+                            <pre>${formatJson(result)}</pre>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('addResult').innerHTML = `<div class="result-box error"><h3>Error</h3><p>${result.error}</p></div>`;
+                }
+            } catch (error) {
+                document.getElementById('addResult').innerHTML = `<div class="result-box error"><h3>Error</h3><p>${error.message}</p></div>`;
+            }
+        }
+
+        async function querySample() {
+            try {
+                const sampleId = document.getElementById('queryId').value;
+                if (!sampleId) {
+                    alert('Please enter a sample ID');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/samples/${sampleId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('queryResult').innerHTML = `
+                        <div class="result-box success">
+                            <h3>Sample Found</h3>
+                            <pre>${formatJson(result.data)}</pre>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('queryResult').innerHTML = `<div class="result-box error"><h3>Error</h3><p>${result.error}</p></div>`;
+                }
+            } catch (error) {
+                document.getElementById('queryResult').innerHTML = `<div class="result-box error"><h3>Error</h3><p>${error.message}</p></div>`;
+            }
+        }
+
+        async function updateSample() {
+            try {
+                const sampleId = document.getElementById('updateId').value;
+                if (!sampleId) {
+                    alert('Please enter a sample ID');
+                    return;
+                }
+
+                const scientific = document.getElementById('updateScientific').value;
+                const temp = document.getElementById('updateTemp').value;
+                const humidity = document.getElementById('updateHumidity').value;
+
+                if (!scientific && !temp && !humidity) {
+                    alert('Please fill at least one field to update');
+                    return;
+                }
+
+                const updateData = {};
+                if (scientific) {
+                    updateData.plant_sample_detail = { scientific_name: scientific };
+                }
+                if (temp) {
+                    updateData.environmental_conditions = { temperature: parseFloat(temp) };
+                }
+                if (humidity) {
+                    updateData.environmental_conditions = { ...(updateData.environmental_conditions || {}), humidity: parseFloat(humidity) };
+                }
+
+                const response = await fetch(`${API_BASE}/samples/${sampleId}/update`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('updateResult').innerHTML = `
+                        <div class="result-box success">
+                            <h3>Success!</h3>
+                            <p>${result.message}</p>
+                            <pre>${formatJson(result)}</pre>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('updateResult').innerHTML = `<div class="result-box error"><h3>Error</h3><p>${result.error}</p></div>`;
+                }
+            } catch (error) {
+                document.getElementById('updateResult').innerHTML = `<div class="result-box error"><h3>Error</h3><p>${error.message}</p></div>`;
+            }
+        }
+
+        async function deleteSample() {
+            try {
+                const sampleId = document.getElementById('deleteId').value;
+                if (!sampleId) {
+                    alert('Please enter a sample ID');
+                    return;
+                }
+
+                if (!confirm('Are you sure you want to delete this sample?')) {
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/samples/${sampleId}/delete`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('deleteResult').innerHTML = `
+                        <div class="result-box success">
+                            <h3>Success!</h3>
+                            <p>${result.message}</p>
+                            <pre>${formatJson(result)}</pre>
+                        </div>
+                    `;
+                    document.getElementById('deleteId').value = '';
+                } else {
+                    document.getElementById('deleteResult').innerHTML = `<div class="result-box error"><h3>Error</h3><p>${result.error}</p></div>`;
+                }
+            } catch (error) {
+                document.getElementById('deleteResult').innerHTML = `<div class="result-box error"><h3>Error</h3><p>${error.message}</p></div>`;
+            }
+        }
+    </script>
+</body>
+</html>
